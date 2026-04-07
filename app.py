@@ -1,14 +1,15 @@
-from fastapi import FastAPI, Depends, HTTPException, Header, File, UploadFile, Request
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-from sqlalchemy.orm import Session
+import os
 import shutil
 from datetime import datetime
 
-from database import engine, get_db, Base
-from models import User, Tweet, Like, Follow, Media
+from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from sqlalchemy.orm import Session
+
+from database import Base, engine, get_db
+from models import Follow, Like, Media, Tweet, User
 from schemas import *
-import os
 
 os.makedirs("uploads", exist_ok=True)
 
@@ -46,9 +47,9 @@ def get_current_user(api_key: str = Header(...), db: Session = Depends(get_db)):
 
 @app.post("/api/tweets", response_model=TweetIdResponse)
 def create_tweet(
-        tweet: TweetCreate,
-        user: User = Depends(get_current_user),
-        db: Session = Depends(get_db)
+    tweet: TweetCreate,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """Создать новый твит"""
     new_tweet = Tweet(content=tweet.tweet_data, user_id=user.id)
@@ -66,9 +67,7 @@ def create_tweet(
 
 @app.delete("/api/tweets/{tweet_id}", response_model=SimpleResponse)
 def delete_tweet(
-        tweet_id: int,
-        user: User = Depends(get_current_user),
-        db: Session = Depends(get_db)
+    tweet_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """Удалить свой твит"""
     tweet = db.query(Tweet).filter(Tweet.id == tweet_id).first()
@@ -84,9 +83,9 @@ def delete_tweet(
 
 @app.post("/api/medias", response_model=MediaResponse)
 async def upload_media(
-        file: UploadFile = File(...),
-        user: User = Depends(get_current_user),
-        db: Session = Depends(get_db)
+    file: UploadFile = File(...),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """Загрузить картинку"""
     filename = f"{datetime.now().timestamp()}_{file.filename}"
@@ -104,15 +103,14 @@ async def upload_media(
 
 @app.post("/api/tweets/{tweet_id}/likes", response_model=SimpleResponse)
 def like_tweet(
-        tweet_id: int,
-        user: User = Depends(get_current_user),
-        db: Session = Depends(get_db)
+    tweet_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """Поставить лайк"""
-    existing = db.query(Like).filter(
-        Like.user_id == user.id,
-        Like.tweet_id == tweet_id
-    ).first()
+    existing = (
+        db.query(Like)
+        .filter(Like.user_id == user.id, Like.tweet_id == tweet_id)
+        .first()
+    )
 
     if not existing:
         like = Like(user_id=user.id, tweet_id=tweet_id)
@@ -124,15 +122,14 @@ def like_tweet(
 
 @app.delete("/api/tweets/{tweet_id}/likes", response_model=SimpleResponse)
 def unlike_tweet(
-        tweet_id: int,
-        user: User = Depends(get_current_user),
-        db: Session = Depends(get_db)
+    tweet_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """Убрать лайк"""
-    like = db.query(Like).filter(
-        Like.user_id == user.id,
-        Like.tweet_id == tweet_id
-    ).first()
+    like = (
+        db.query(Like)
+        .filter(Like.user_id == user.id, Like.tweet_id == tweet_id)
+        .first()
+    )
 
     if like:
         db.delete(like)
@@ -143,9 +140,7 @@ def unlike_tweet(
 
 @app.post("/api/users/{user_id}/follow", response_model=SimpleResponse)
 def follow_user(
-        user_id: int,
-        user: User = Depends(get_current_user),
-        db: Session = Depends(get_db)
+    user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """Подписаться на пользователя"""
     if user.id == user_id:
@@ -155,10 +150,11 @@ def follow_user(
     if not target:
         raise HTTPException(status_code=404, detail="User not found")
 
-    existing = db.query(Follow).filter(
-        Follow.follower_id == user.id,
-        Follow.following_id == user_id
-    ).first()
+    existing = (
+        db.query(Follow)
+        .filter(Follow.follower_id == user.id, Follow.following_id == user_id)
+        .first()
+    )
 
     if not existing:
         follow = Follow(follower_id=user.id, following_id=user_id)
@@ -170,15 +166,14 @@ def follow_user(
 
 @app.delete("/api/users/{user_id}/follow", response_model=SimpleResponse)
 def unfollow_user(
-        user_id: int,
-        user: User = Depends(get_current_user),
-        db: Session = Depends(get_db)
+    user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """Отписаться от пользователя"""
-    follow = db.query(Follow).filter(
-        Follow.follower_id == user.id,
-        Follow.following_id == user_id
-    ).first()
+    follow = (
+        db.query(Follow)
+        .filter(Follow.follower_id == user.id, Follow.following_id == user_id)
+        .first()
+    )
 
     if follow:
         db.delete(follow)
@@ -188,22 +183,23 @@ def unfollow_user(
 
 
 @app.get("/api/tweets")
-def get_timeline(
-        user: User = Depends(get_current_user),
-        db: Session = Depends(get_db)
-):
+def get_timeline(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Получить ленту твитов, отсортированных по лайкам от подписок"""
 
     # Получаем ID подписок
-    following_ids = {f.following_id for f in user.following}  # используем set для быстрого поиска
+    following_ids = {
+        f.following_id for f in user.following
+    }  # используем set для быстрого поиска
 
     # Получаем все твиты
     all_tweets = db.query(Tweet).all()
 
     # Сортируем
     all_tweets.sort(
-        key=lambda tweet: sum(1 for like in tweet.likes if like.user_id in following_ids),
-        reverse=True
+        key=lambda tweet: sum(
+            1 for like in tweet.likes if like.user_id in following_ids
+        ),
+        reverse=True,
     )
 
     # Формируем результат
@@ -213,38 +209,30 @@ def get_timeline(
             {
                 "id": tweet.id,
                 "content": tweet.content,
-                "attachments": [f"/uploads/{m.file_path.split('/')[-1]}" for m in tweet.attachments],
-                "author": {
-                    "id": tweet.author.id,
-                    "name": tweet.author.name
-                },
+                "attachments": [
+                    f"/uploads/{m.file_path.split('/')[-1]}" for m in tweet.attachments
+                ],
+                "author": {"id": tweet.author.id, "name": tweet.author.name},
                 "likes": [
-                    {
-                        "user_id": like.user.id,
-                        "name": like.user.name
-                    }
+                    {"user_id": like.user.id, "name": like.user.name}
                     for like in tweet.likes
-                ]
+                ],
             }
             for tweet in all_tweets
-        ]
+        ],
     }
 
 
 @app.get("/api/users/me")
 def get_my_profile(
-        user: User = Depends(get_current_user),
+    user: User = Depends(get_current_user),
 ):
     """Получить информацию о своем профиле"""
 
-    followers = [
-        {"id": f.follower.id, "name": f.follower.name}
-        for f in user.followers
-    ]
+    followers = [{"id": f.follower.id, "name": f.follower.name} for f in user.followers]
 
     following = [
-        {"id": f.following.id, "name": f.following.name}
-        for f in user.following
+        {"id": f.following.id, "name": f.following.name} for f in user.following
     ]
 
     return {
@@ -253,16 +241,14 @@ def get_my_profile(
             "id": user.id,
             "name": user.name,
             "followers": followers,
-            "following": following
-        }
+            "following": following,
+        },
     }
 
 
 @app.get("/api/users/{user_id}")
 def get_user_profile(
-        user_id: int,
-        user: User = Depends(get_current_user),
-        db: Session = Depends(get_db)
+    user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """Получить информацию о профиле другого пользователя по id"""
 
@@ -271,13 +257,11 @@ def get_user_profile(
         raise HTTPException(status_code=404, detail="User not found")
 
     followers = [
-        {"id": f.follower.id, "name": f.follower.name}
-        for f in target_user.followers
+        {"id": f.follower.id, "name": f.follower.name} for f in target_user.followers
     ]
 
     following = [
-        {"id": f.following.id, "name": f.following.name}
-        for f in target_user.following
+        {"id": f.following.id, "name": f.following.name} for f in target_user.following
     ]
 
     return {
@@ -286,6 +270,6 @@ def get_user_profile(
             "id": target_user.id,
             "name": target_user.name,
             "followers": followers,
-            "following": following
-        }
+            "following": following,
+        },
     }

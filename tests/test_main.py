@@ -1,4 +1,4 @@
-from models import User, Tweet
+from models import Tweet, User
 
 
 def test_create_tweet(db, client):
@@ -13,7 +13,7 @@ def test_create_tweet(db, client):
     response = client.post(
         "/api/tweets",
         headers={"api-key": "test-key-123"},
-        json={"tweet_data": "Hello World!"}
+        json={"tweet_data": "Hello World!"},
     )
 
     assert response.status_code == 200
@@ -33,10 +33,7 @@ def test_get_timeline(db, client):
     db.add(tweet)
     db.commit()
 
-    response = client.get(
-        "/api/tweets",
-        headers={"api-key": "test-key-123"}
-    )
+    response = client.get("/api/tweets", headers={"api-key": "test-key-123"})
 
     assert response.status_code == 200
     assert response.json()["result"] == True
@@ -54,8 +51,7 @@ def test_follow_user(db, client):
     db.refresh(user2)
 
     response = client.post(
-        f"/api/users/{user2.id}/follow",
-        headers={"api-key": user1.api_key}
+        f"/api/users/{user2.id}/follow", headers={"api-key": user1.api_key}
     )
 
     assert response.status_code == 200
@@ -76,8 +72,7 @@ def test_like_tweet(db, client):
     db.refresh(tweet)
 
     response = client.post(
-        f"/api/tweets/{tweet.id}/likes",
-        headers={"api-key": user.api_key}
+        f"/api/tweets/{tweet.id}/likes", headers={"api-key": user.api_key}
     )
 
     assert response.status_code == 200
@@ -99,8 +94,7 @@ def test_delete_tweet(db, client):
 
     # Удаляем твит
     response = client.delete(
-        f"/api/tweets/{tweet.id}",
-        headers={"api-key": user.api_key}
+        f"/api/tweets/{tweet.id}", headers={"api-key": user.api_key}
     )
 
     assert response.status_code == 200
@@ -114,10 +108,7 @@ def test_get_user_profile(db, client):
     db.commit()
     db.refresh(user)
 
-    response = client.get(
-        "/api/users/me",
-        headers={"api-key": user.api_key}
-    )
+    response = client.get("/api/users/me", headers={"api-key": user.api_key})
 
     assert response.status_code == 200
     assert response.json()["result"] == True
@@ -139,8 +130,7 @@ def test_unfollow_user(db, client):
 
     # Затем отписываемся
     response = client.delete(
-        f"/api/users/{user2.id}/follow",
-        headers={"api-key": user1.api_key}
+        f"/api/users/{user2.id}/follow", headers={"api-key": user1.api_key}
     )
 
     assert response.status_code == 200
@@ -164,8 +154,7 @@ def test_unlike_tweet(db, client):
 
     # Затем удаляем лайк
     response = client.delete(
-        f"/api/tweets/{tweet.id}/likes",
-        headers={"api-key": user.api_key}
+        f"/api/tweets/{tweet.id}/likes", headers={"api-key": user.api_key}
     )
 
     assert response.status_code == 200
@@ -174,10 +163,7 @@ def test_unlike_tweet(db, client):
 
 def test_invalid_api_key(db, client):
     """Тест с неверным API ключом"""
-    response = client.get(
-        "/api/tweets",
-        headers={"api-key": "invalid-key-12345"}
-    )
+    response = client.get("/api/tweets", headers={"api-key": "invalid-key-12345"})
 
     assert response.status_code == 401
 
@@ -192,10 +178,7 @@ def test_tweet_not_found(db, client):
     db.add(user)
     db.commit()
 
-    response = client.delete(
-        "/api/tweets/99999",
-        headers={"api-key": user.api_key}
-    )
+    response = client.delete("/api/tweets/99999", headers={"api-key": user.api_key})
 
     assert response.status_code == 404
     response_json = response.json()
@@ -221,8 +204,7 @@ def test_delete_others_tweet(db, client):
 
     # user2 пытается удалить чужой твит
     response = client.delete(
-        f"/api/tweets/{tweet.id}",
-        headers={"api-key": user2.api_key}
+        f"/api/tweets/{tweet.id}", headers={"api-key": user2.api_key}
     )
 
     assert response.status_code == 403  # Forbidden
@@ -236,8 +218,7 @@ def test_follow_self(db, client):
     db.refresh(user)
 
     response = client.post(
-        f"/api/users/{user.id}/follow",
-        headers={"api-key": user.api_key}
+        f"/api/users/{user.id}/follow", headers={"api-key": user.api_key}
     )
 
     assert response.status_code == 400
@@ -255,6 +236,7 @@ def test_upload_media(db, client):
 
     # Создаем тестовый файл
     import tempfile
+
     with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
         f.write(b"fake image content")
         f.flush()
@@ -263,7 +245,7 @@ def test_upload_media(db, client):
             response = client.post(
                 "/api/medias",
                 headers={"api-key": user.api_key},
-                files={"file": ("test.jpg", img, "image/jpeg")}
+                files={"file": ("test.jpg", img, "image/jpeg")},
             )
 
     assert response.status_code == 200
@@ -280,6 +262,7 @@ def test_create_tweet_with_media(db, client):
 
     # Сначала загружаем медиа
     import tempfile
+
     with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
         f.write(b"fake image")
         f.flush()
@@ -288,7 +271,7 @@ def test_create_tweet_with_media(db, client):
             media_response = client.post(
                 "/api/medias",
                 headers={"api-key": user.api_key},
-                files={"file": ("test.jpg", img, "image/jpeg")}
+                files={"file": ("test.jpg", img, "image/jpeg")},
             )
 
     media_id = media_response.json()["media_id"]
@@ -297,10 +280,7 @@ def test_create_tweet_with_media(db, client):
     response = client.post(
         "/api/tweets",
         headers={"api-key": user.api_key},
-        json={
-            "tweet_data": "Tweet with image!",
-            "tweet_media_ids": [media_id]
-        }
+        json={"tweet_data": "Tweet with image!", "tweet_media_ids": [media_id]},
     )
 
     assert response.status_code == 200
@@ -321,14 +301,12 @@ def test_like_tweet_already_liked(db, client):
 
     # Ставим лайк первый раз
     response1 = client.post(
-        f"/api/tweets/{tweet.id}/likes",
-        headers={"api-key": user.api_key}
+        f"/api/tweets/{tweet.id}/likes", headers={"api-key": user.api_key}
     )
 
     # Ставим лайк второй раз
     response2 = client.post(
-        f"/api/tweets/{tweet.id}/likes",
-        headers={"api-key": user.api_key}
+        f"/api/tweets/{tweet.id}/likes", headers={"api-key": user.api_key}
     )
 
     assert response1.status_code == 200
@@ -350,8 +328,7 @@ def test_unlike_tweet_not_liked(db, client):
     db.refresh(tweet)
 
     response = client.delete(
-        f"/api/tweets/{tweet.id}/likes",
-        headers={"api-key": user.api_key}
+        f"/api/tweets/{tweet.id}/likes", headers={"api-key": user.api_key}
     )
 
     assert response.status_code == 200
@@ -369,14 +346,12 @@ def test_follow_user_twice(db, client):
 
     # Подписываемся первый раз
     response1 = client.post(
-        f"/api/users/{user2.id}/follow",
-        headers={"api-key": user1.api_key}
+        f"/api/users/{user2.id}/follow", headers={"api-key": user1.api_key}
     )
 
     # Подписываемся второй раз
     response2 = client.post(
-        f"/api/users/{user2.id}/follow",
-        headers={"api-key": user1.api_key}
+        f"/api/users/{user2.id}/follow", headers={"api-key": user1.api_key}
     )
 
     assert response1.status_code == 200
@@ -393,8 +368,7 @@ def test_unfollow_not_following(db, client):
     db.refresh(user2)
 
     response = client.delete(
-        f"/api/users/{user2.id}/follow",
-        headers={"api-key": user1.api_key}
+        f"/api/users/{user2.id}/follow", headers={"api-key": user1.api_key}
     )
 
     assert response.status_code == 200

@@ -1,6 +1,8 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
+
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
+
 from database import Base
 
 
@@ -13,8 +15,12 @@ class User(Base):
 
     tweets = relationship("Tweet", back_populates="author")
     likes = relationship("Like", back_populates="user")
-    following = relationship("Follow", foreign_keys="Follow.follower_id", back_populates="follower")
-    followers = relationship("Follow", foreign_keys="Follow.following_id", back_populates="following")
+    following = relationship(
+        "Follow", foreign_keys="Follow.follower_id", back_populates="follower"
+    )
+    followers = relationship(
+        "Follow", foreign_keys="Follow.following_id", back_populates="following"
+    )
 
 
 class Tweet(Base):
@@ -48,8 +54,12 @@ class Follow(Base):
     follower_id = Column(Integer, ForeignKey("users.id"))
     following_id = Column(Integer, ForeignKey("users.id"))
 
-    follower = relationship("User", foreign_keys=[follower_id], back_populates="following")
-    following = relationship("User", foreign_keys=[following_id], back_populates="followers")
+    follower = relationship(
+        "User", foreign_keys=[follower_id], back_populates="following"
+    )
+    following = relationship(
+        "User", foreign_keys=[following_id], back_populates="followers"
+    )
 
 
 class Media(Base):
