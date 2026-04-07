@@ -1,5 +1,5 @@
 import os
-import shutil
+from contextlib import asynccontextmanager
 from datetime import datetime
 
 from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
@@ -13,10 +13,18 @@ from schemas import MediaResponse, SimpleResponse, TweetCreate, TweetIdResponse
 
 os.makedirs("uploads", exist_ok=True)
 
-# Создаем таблицы
-Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Microblog API", docs_url="/docs")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Управление жизненным циклом приложения"""
+    if not os.environ.get("TESTING"):
+        Base.metadata.create_all(bind=engine)
+        print("✅ Database tables created")
+    yield
+    print("👋 Shutting down...")
+
+
+app = FastAPI(title="Microblog API", docs_url="/docs", lifespan=lifespan)
 
 # Монтируем папки со статикой
 app.mount("/css", StaticFiles(directory="static/css"), name="css")
@@ -88,15 +96,28 @@ async def upload_media(
     db: Session = Depends(get_db),
 ):
     """Загрузить картинку"""
-    filename = f"{datetime.now().timestamp()}_{file.filename}"
+    # Валидация типа файла
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Only images are allowed")
+
+    # Безопасное имя файла
+    original_filename = file.filename.replace(" ", "_")
+    filename = f"{datetime.now().timestamp()}_{original_filename}"
     filepath = f"uploads/{filename}"
 
-    with open(filepath, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    # Сохранение файла
+    try:
+        with open(filepath, "wb") as buffer:
+            content = await file.read()
+            buffer.write(content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
 
+    # Сохранение в БД
     media = Media(file_path=filepath)
     db.add(media)
     db.commit()
+    db.refresh(media)
 
     return {"result": True, "media_id": media.id}
 
@@ -187,9 +208,7 @@ def get_timeline(user: User = Depends(get_current_user), db: Session = Depends(g
     """Получить ленту твитов, отсортированных по лайкам от подписок"""
 
     # Получаем ID подписок
-    following_ids = {
-        f.following_id for f in user.following
-    }  # используем set для быстрого поиска
+    following_ids = {f.following_id for f in user.following}
 
     # Получаем все твиты
     all_tweets = db.query(Tweet).all()

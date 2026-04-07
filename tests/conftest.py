@@ -1,14 +1,19 @@
+import os
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+# ✅ УСТАНАВЛИВАЕМ ПЕРЕМЕННУЮ ОКРУЖЕНИЯ ДЛЯ ТЕСТОВ
+os.environ["TESTING"] = "true"
+
 from app import app
 from database import Base, get_db
 
-# Тестовая БД
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+# Тестовая БД - используем SQLite в памяти (быстрее и чище)
+SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     connect_args={"check_same_thread": False},
@@ -17,17 +22,26 @@ engine = create_engine(
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
+@pytest.fixture(scope="session", autouse=True)
+def setup_database():
+    """Создает таблицы один раз для всех тестов"""
+    Base.metadata.create_all(bind=engine)
+    yield
+    Base.metadata.drop_all(bind=engine)
+
+
 @pytest.fixture(scope="function")
 def db():
-    """Фикстура для сессии БД"""
-    Base.metadata.create_all(bind=engine)
-    db = TestingSessionLocal()
-    try:
-        yield db
-    finally:
-        db.rollback()
-        db.close()
-    Base.metadata.drop_all(bind=engine)
+    """Фикстура для сессии БД с изоляцией транзакций"""
+    connection = engine.connect()
+    transaction = connection.begin()
+    session = TestingSessionLocal(bind=connection)
+
+    yield session
+
+    session.close()
+    transaction.rollback()
+    connection.close()
 
 
 @pytest.fixture(scope="function")

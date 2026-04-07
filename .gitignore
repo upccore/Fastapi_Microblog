@@ -48,5 +48,3 @@ Thumbs.db
 
 # FastAPI specific
 *.pid
-
-.flake8
