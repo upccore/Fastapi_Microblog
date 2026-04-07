@@ -17,7 +17,7 @@ def test_create_tweet(db, client):
     )
 
     assert response.status_code == 200
-    assert response.json()["result"] == True
+    assert response.json()["result"]
     assert "tweet_id" in response.json()
 
 
@@ -36,7 +36,7 @@ def test_get_timeline(db, client):
     response = client.get("/api/tweets", headers={"api-key": "test-key-123"})
 
     assert response.status_code == 200
-    assert response.json()["result"] == True
+    assert response.json()["result"]
     assert len(response.json()["tweets"]) > 0
 
 
@@ -55,7 +55,7 @@ def test_follow_user(db, client):
     )
 
     assert response.status_code == 200
-    assert response.json()["result"] == True
+    assert response.json()["result"]
 
 
 def test_like_tweet(db, client):
@@ -76,7 +76,7 @@ def test_like_tweet(db, client):
     )
 
     assert response.status_code == 200
-    assert response.json()["result"] == True
+    assert response.json()["result"]
 
 
 def test_delete_tweet(db, client):
@@ -98,7 +98,7 @@ def test_delete_tweet(db, client):
     )
 
     assert response.status_code == 200
-    assert response.json()["result"] == True
+    assert response.json()["result"]
 
 
 def test_get_user_profile(db, client):
@@ -111,7 +111,7 @@ def test_get_user_profile(db, client):
     response = client.get("/api/users/me", headers={"api-key": user.api_key})
 
     assert response.status_code == 200
-    assert response.json()["result"] == True
+    assert response.json()["result"]
     assert "user" in response.json()
     assert response.json()["user"]["name"] == "Profile User"
 
@@ -134,7 +134,7 @@ def test_unfollow_user(db, client):
     )
 
     assert response.status_code == 200
-    assert response.json()["result"] == True
+    assert response.json()["result"]
 
 
 def test_unlike_tweet(db, client):
@@ -158,7 +158,7 @@ def test_unlike_tweet(db, client):
     )
 
     assert response.status_code == 200
-    assert response.json()["result"] == True
+    assert response.json()["result"]
 
 
 def test_invalid_api_key(db, client):
@@ -249,7 +249,7 @@ def test_upload_media(db, client):
             )
 
     assert response.status_code == 200
-    assert response.json()["result"] == True
+    assert response.json()["result"]
     assert "media_id" in response.json()
 
 
@@ -284,7 +284,7 @@ def test_create_tweet_with_media(db, client):
     )
 
     assert response.status_code == 200
-    assert response.json()["result"] == True
+    assert response.json()["result"]
 
 
 def test_like_tweet_already_liked(db, client):
@@ -311,8 +311,8 @@ def test_like_tweet_already_liked(db, client):
 
     assert response1.status_code == 200
     assert response2.status_code == 200
-    assert response1.json()["result"] == True
-    assert response2.json()["result"] == True
+    assert response1.json()["result"]
+    assert response2.json()["result"]
 
 
 def test_unlike_tweet_not_liked(db, client):
@@ -332,7 +332,7 @@ def test_unlike_tweet_not_liked(db, client):
     )
 
     assert response.status_code == 200
-    assert response.json()["result"] == True
+    assert response.json()["result"]
 
 
 def test_follow_user_twice(db, client):
@@ -372,4 +372,4 @@ def test_unfollow_not_following(db, client):
     )
 
     assert response.status_code == 200
-    assert response.json()["result"] == True
+    assert response.json()["result"]

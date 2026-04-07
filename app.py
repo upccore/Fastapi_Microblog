@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from database import Base, engine, get_db
 from models import Follow, Like, Media, Tweet, User
-from schemas import *
+from schemas import MediaResponse, SimpleResponse, TweetCreate, TweetIdResponse
 
 os.makedirs("uploads", exist_ok=True)
 
