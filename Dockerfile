@@ -7,7 +7,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Создаем директории
 RUN mkdir -p uploads static
 
 EXPOSE 5000

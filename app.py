@@ -64,10 +64,11 @@ def create_tweet(
     db.add(new_tweet)
     db.flush()
 
-    for media_id in tweet.tweet_media_ids:
-        media = db.query(Media).filter(Media.id == media_id).first()
-        if media:
-            media.tweet_id = new_tweet.id
+    if tweet.tweet_media_ids:
+        for media_id in tweet.tweet_media_ids:
+            media = db.query(Media).filter(Media.id == media_id).first()
+            if media:
+                media.tweet_id = new_tweet.id
 
     db.commit()
     return {"result": True, "tweet_id": new_tweet.id}
@@ -96,9 +97,11 @@ async def upload_media(
     db: Session = Depends(get_db),
 ):
     """Загрузить картинку"""
-    # Валидация типа файла
-    if not file.content_type.startswith("image/"):
+    if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Only images are allowed")
+
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="File has no filename")
 
     # Безопасное имя файла
     original_filename = file.filename.replace(" ", "_")
