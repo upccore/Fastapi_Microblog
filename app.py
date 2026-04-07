@@ -192,39 +192,43 @@ def get_timeline(
         user: User = Depends(get_current_user),
         db: Session = Depends(get_db)
 ):
-    """Получить ленту всех твитов (новые сверху)"""
+    """Получить ленту твитов, отсортированных по лайкам от подписок"""
 
-    # Получаем ВСЕ твиты из базы
-    tweets = db.query(Tweet).all()
+    # Получаем ID подписок
+    following_ids = {f.following_id for f in user.following}  # используем set для быстрого поиска
 
-    # Сортируем по дате создания (новые сверху)
-    tweets.sort(key=lambda x: x.created_at, reverse=True)
+    # Получаем все твиты
+    all_tweets = db.query(Tweet).all()
+
+    # Сортируем
+    all_tweets.sort(
+        key=lambda tweet: sum(1 for like in tweet.likes if like.user_id in following_ids),
+        reverse=True
+    )
 
     # Формируем результат
-    result = []
-    for tweet in tweets:
-        author = db.query(User).filter(User.id == tweet.user_id).first()
-        likes = db.query(Like).filter(Like.tweet_id == tweet.id).all()
-        attachments = db.query(Media).filter(Media.tweet_id == tweet.id).all()
-
-        result.append({
-            "id": tweet.id,
-            "content": tweet.content,
-            "attachments": [f"/uploads/{m.file_path.split('/')[-1]}" for m in attachments],
-            "author": {
-                "id": author.id,
-                "name": author.name
-            },
-            "likes": [
-                {
-                    "user_id": like.user_id,
-                    "name": db.query(User).filter(User.id == like.user_id).first().name
-                }
-                for like in likes
-            ]
-        })
-
-    return {"result": True, "tweets": result}
+    return {
+        "result": True,
+        "tweets": [
+            {
+                "id": tweet.id,
+                "content": tweet.content,
+                "attachments": [f"/uploads/{m.file_path.split('/')[-1]}" for m in tweet.attachments],
+                "author": {
+                    "id": tweet.author.id,
+                    "name": tweet.author.name
+                },
+                "likes": [
+                    {
+                        "user_id": like.user.id,
+                        "name": like.user.name
+                    }
+                    for like in tweet.likes
+                ]
+            }
+            for tweet in all_tweets
+        ]
+    }
 
 
 @app.get("/api/users/me")
