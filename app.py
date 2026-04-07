@@ -8,6 +8,9 @@ from datetime import datetime
 from database import engine, get_db, Base
 from models import User, Tweet, Like, Follow, Media
 from schemas import *
+import os
+
+os.makedirs("uploads", exist_ok=True)
 
 # Создаем таблицы
 Base.metadata.create_all(bind=engine)
@@ -18,6 +21,15 @@ app = FastAPI(title="Microblog API", docs_url="/docs")
 app.mount("/css", StaticFiles(directory="static/css"), name="css")
 app.mount("/js", StaticFiles(directory="static/js"), name="js")
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+@app.get("/uploads/{filename}")
+async def get_uploaded_file(filename: str):
+    """Получить загруженный файл"""
+    file_path = f"uploads/{filename}"
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    raise HTTPException(status_code=404, detail="File not found")
 
 
 @app.get("/")
@@ -180,21 +192,17 @@ def get_timeline(
         user: User = Depends(get_current_user),
         db: Session = Depends(get_db)
 ):
-    """Получить ленту твитов"""
-    following_ids = [f.following_id for f in db.query(Follow).filter(Follow.follower_id == user.id).all()]
-    following_ids.append(user.id)
+    """Получить ленту всех твитов (новые сверху)"""
 
-    tweets = db.query(Tweet).filter(Tweet.user_id.in_(following_ids)).all()
+    # Получаем ВСЕ твиты из базы
+    tweets = db.query(Tweet).all()
 
-    tweets_with_likes = []
-    for tweet in tweets:
-        likes_count = db.query(Like).filter(Like.tweet_id == tweet.id).count()
-        tweets_with_likes.append((tweet, likes_count))
+    # Сортируем по дате создания (новые сверху)
+    tweets.sort(key=lambda x: x.created_at, reverse=True)
 
-    tweets_with_likes.sort(key=lambda x: x[1], reverse=True)
-
+    # Формируем результат
     result = []
-    for tweet, _ in tweets_with_likes:
+    for tweet in tweets:
         author = db.query(User).filter(User.id == tweet.user_id).first()
         likes = db.query(Like).filter(Like.tweet_id == tweet.id).all()
         attachments = db.query(Media).filter(Media.tweet_id == tweet.id).all()
@@ -221,48 +229,18 @@ def get_timeline(
 
 @app.get("/api/users/me")
 def get_my_profile(
-        request: Request,
-        api_key: str = Header(None),
-        db: Session = Depends(get_db)
+        user: User = Depends(get_current_user),
 ):
-    """Получить свой профиль (работает без api-key для теста)"""
-
-    # Логируем все заголовки чтобы увидеть что приходит
-    print("=== HEADERS RECEIVED ===")
-    for key, value in request.headers.items():
-        print(f"  {key}: {value}")
-    print("========================")
-
-    # Если api-key не передан, берем первого пользователя
-    if not api_key:
-        user = db.query(User).first()
-        if not user:
-            # Создаем тестового пользователя если нет ни одного
-            user = User(name="Test", api_key="test123")
-            db.add(user)
-            db.commit()
-        print(f"Using default user: {user.name}")
-    else:
-        user = db.query(User).filter(User.api_key == api_key).first()
-        print(f"Looking for api_key '{api_key}', found: {user.name if user else 'Not found'}")
-
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid api-key")
+    """Получить информацию о своем профиле"""
 
     followers = [
-        {
-            "id": f.follower_id,
-            "name": db.query(User).filter(User.id == f.follower_id).first().name
-        }
-        for f in db.query(Follow).filter(Follow.following_id == user.id).all()
+        {"id": f.follower.id, "name": f.follower.name}
+        for f in user.followers
     ]
 
     following = [
-        {
-            "id": f.following_id,
-            "name": db.query(User).filter(User.id == f.following_id).first().name
-        }
-        for f in db.query(Follow).filter(Follow.follower_id == user.id).all()
+        {"id": f.following.id, "name": f.following.name}
+        for f in user.following
     ]
 
     return {
@@ -270,6 +248,39 @@ def get_my_profile(
         "user": {
             "id": user.id,
             "name": user.name,
+            "followers": followers,
+            "following": following
+        }
+    }
+
+
+@app.get("/api/users/{user_id}")
+def get_user_profile(
+        user_id: int,
+        user: User = Depends(get_current_user),
+        db: Session = Depends(get_db)
+):
+    """Получить информацию о профиле другого пользователя по id"""
+
+    target_user = db.query(User).filter(User.id == user_id).first()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    followers = [
+        {"id": f.follower.id, "name": f.follower.name}
+        for f in target_user.followers
+    ]
+
+    following = [
+        {"id": f.following.id, "name": f.following.name}
+        for f in target_user.following
+    ]
+
+    return {
+        "result": True,
+        "user": {
+            "id": target_user.id,
+            "name": target_user.name,
             "followers": followers,
             "following": following
         }
