@@ -6,13 +6,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-# ✅ УСТАНАВЛИВАЕМ ПЕРЕМЕННУЮ ОКРУЖЕНИЯ ДЛЯ ТЕСТОВ
+# Устанавливаем переменную окружения для тестов
 os.environ["TESTING"] = "true"
 
 from app import app
 from database import Base, get_db
 
-# Тестовая БД - используем SQLite в памяти (быстрее и чище)
+# Тестовая БД - SQLite в памяти
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
@@ -24,7 +24,11 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_database():
-    """Создает таблицы один раз для всех тестов"""
+    """
+    Создаёт таблицы один раз для всех тестов.
+
+    Scope: session - выполняется один раз за сессию тестирования
+    """
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)
@@ -32,7 +36,14 @@ def setup_database():
 
 @pytest.fixture(scope="function")
 def db():
-    """Фикстура для сессии БД с изоляцией транзакций"""
+    """
+    Фикстура сессии БД с изоляцией транзакций.
+
+    Scope: function - новая сессия для каждого теста
+
+    Yields:
+        Session: Сессия SQLAlchemy
+    """
     connection = engine.connect()
     transaction = connection.begin()
     session = TestingSessionLocal(bind=connection)
@@ -46,7 +57,15 @@ def db():
 
 @pytest.fixture(scope="function")
 def client(db):
-    """Фикстура для тестового клиента с переопределенной БД"""
+    """
+    Фикстура тестового клиента с переопределённой БД.
+
+    Args:
+        db (Session): Сессия БД из фикстуры
+
+    Yields:
+        TestClient: Клиент FastAPI для тестирования эндпоинтов
+    """
 
     def override_get_db():
         try:

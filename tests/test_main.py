@@ -2,7 +2,18 @@ from models import Tweet, User
 
 
 def test_create_tweet(db, client):
-    """Создание твита"""
+    """
+    Тестирует создание нового твита.
+
+    Args:
+        db (Session): Сессия БД из фикстуры
+        client (TestClient): Тестовый клиент FastAPI
+
+    Asserts:
+        - Статус ответа 200
+        - result == True
+        - tweet_id присутствует в ответе
+    """
     # Создаем тестового пользователя
     test_user = User(name="Test User", api_key="test-key-123")
     db.add(test_user)
@@ -22,7 +33,18 @@ def test_create_tweet(db, client):
 
 
 def test_get_timeline(db, client):
-    """Получение ленты твитов"""
+    """
+    Тестирует получение ленты твитов.
+
+    Args:
+        db (Session): Сессия БД из фикстуры
+        client (TestClient): Тестовый клиент FastAPI
+
+    Asserts:
+        - Статус ответа 200
+        - result == True
+        - Список твитов не пустой
+    """
     test_user = User(name="Test User", api_key="test-key-123")
     db.add(test_user)
     db.commit()
@@ -41,7 +63,17 @@ def test_get_timeline(db, client):
 
 
 def test_follow_user(db, client):
-    """Подписка на пользователя"""
+    """
+    Тестирует подписку на пользователя.
+
+    Args:
+        db (Session): Сессия БД из фикстуры
+        client (TestClient): Тестовый клиент FastAPI
+
+    Asserts:
+        - Статус ответа 200
+        - result == True
+    """
     # Создаем пользователей
     user1 = User(name="User 1", api_key="key1")
     user2 = User(name="User 2", api_key="key2")
@@ -59,7 +91,17 @@ def test_follow_user(db, client):
 
 
 def test_like_tweet(db, client):
-    """Лайк твита"""
+    """
+    Тестирует лайк твита.
+
+    Args:
+        db (Session): Сессия БД из фикстуры
+        client (TestClient): Тестовый клиент FastAPI
+
+    Asserts:
+        - Статус ответа 200
+        - result == True
+    """
     user = User(name="Liker", api_key="like-key")
     db.add(user)
     db.commit()
@@ -80,7 +122,17 @@ def test_like_tweet(db, client):
 
 
 def test_delete_tweet(db, client):
-    """Удаление твита"""
+    """
+    Тестирует удаление твита.
+
+    Args:
+        db (Session): Сессия БД из фикстуры
+        client (TestClient): Тестовый клиент FastAPI
+
+    Asserts:
+        - Статус ответа 200
+        - result == True
+    """
     # Создаем пользователя и твит
     user = User(name="Deleter", api_key="delete-key")
     db.add(user)
@@ -102,7 +154,19 @@ def test_delete_tweet(db, client):
 
 
 def test_get_user_profile(db, client):
-    """Получение своего профиля"""
+    """
+    Тестирует получение своего профиля.
+
+    Args:
+        db (Session): Сессия БД из фикстуры
+        client (TestClient): Тестовый клиент FastAPI
+
+    Asserts:
+        - Статус ответа 200
+        - result == True
+        - user присутствует в ответе
+        - Имя пользователя совпадает
+    """
     user = User(name="Profile User", api_key="profile-key")
     db.add(user)
     db.commit()
@@ -117,7 +181,17 @@ def test_get_user_profile(db, client):
 
 
 def test_unfollow_user(db, client):
-    """Отписка от пользователя"""
+    """
+    Тестирует отписку от пользователя.
+
+    Args:
+        db (Session): Сессия БД из фикстуры
+        client (TestClient): Тестовый клиент FastAPI
+
+    Asserts:
+        - Статус ответа 200
+        - result == True
+    """
     user1 = User(name="User A", api_key="key_a")
     user2 = User(name="User B", api_key="key_b")
     db.add_all([user1, user2])
@@ -138,7 +212,17 @@ def test_unfollow_user(db, client):
 
 
 def test_unlike_tweet(db, client):
-    """Удаление лайка с твита"""
+    """
+    Тестирует удаление лайка с твита.
+
+    Args:
+        db (Session): Сессия БД из фикстуры
+        client (TestClient): Тестовый клиент FastAPI
+
+    Asserts:
+        - Статус ответа 200
+        - result == True
+    """
     user = User(name="Unliker", api_key="unlike-key")
     db.add(user)
     db.commit()
@@ -162,7 +246,17 @@ def test_unlike_tweet(db, client):
 
 
 def test_invalid_api_key(db, client):
-    """Тест с неверным API ключом"""
+    """
+    Тестирует ошибку при неверном API ключе.
+
+    Args:
+        db (Session): Сессия БД из фикстуры
+        client (TestClient): Тестовый клиент FastAPI
+
+    Asserts:
+        - Статус ответа 401
+        - detail содержит сообщение об ошибке
+    """
     response = client.get("/api/tweets", headers={"api-key": "invalid-key-12345"})
 
     assert response.status_code == 401
@@ -173,7 +267,17 @@ def test_invalid_api_key(db, client):
 
 
 def test_tweet_not_found(db, client):
-    """Тест запроса несуществующего твита"""
+    """
+    Тестирует ошибку при запросе несуществующего твита.
+
+    Args:
+        db (Session): Сессия БД из фикстуры
+        client (TestClient): Тестовый клиент FastAPI
+
+    Asserts:
+        - Статус ответа 404
+        - detail содержит сообщение об ошибке
+    """
     user = User(name="Test User", api_key="test-key")
     db.add(user)
     db.commit()
@@ -187,7 +291,16 @@ def test_tweet_not_found(db, client):
 
 
 def test_delete_others_tweet(db, client):
-    """Попытка удалить чужой твит (должна быть ошибка)"""
+    """
+    Тестирует попытку удалить чужой твит (должна быть ошибка).
+
+    Args:
+        db (Session): Сессия БД из фикстуры
+        client (TestClient): Тестовый клиент FastAPI
+
+    Asserts:
+        - Статус ответа 403 (Forbidden)
+    """
     # Создаем двух пользователей
     user1 = User(name="Author", api_key="author-key")
     user2 = User(name="Hacker", api_key="hacker-key")
@@ -211,7 +324,17 @@ def test_delete_others_tweet(db, client):
 
 
 def test_follow_self(db, client):
-    """Попытка подписаться на самого себя"""
+    """
+    Тестирует попытку подписаться на самого себя (должна быть ошибка).
+
+    Args:
+        db (Session): Сессия БД из фикстуры
+        client (TestClient): Тестовый клиент FastAPI
+
+    Asserts:
+        - Статус ответа 400
+        - detail содержит сообщение об ошибке
+    """
     user = User(name="Lonely", api_key="lonely-key")
     db.add(user)
     db.commit()
@@ -228,7 +351,18 @@ def test_follow_self(db, client):
 
 
 def test_upload_media(db, client):
-    """Загрузка медиафайла"""
+    """
+    Тестирует загрузку медиафайла.
+
+    Args:
+        db (Session): Сессия БД из фикстуры
+        client (TestClient): Тестовый клиент FastAPI
+
+    Asserts:
+        - Статус ответа 200
+        - result == True
+        - media_id присутствует в ответе
+    """
     user = User(name="Media User", api_key="media-key")
     db.add(user)
     db.commit()
@@ -254,7 +388,17 @@ def test_upload_media(db, client):
 
 
 def test_create_tweet_with_media(db, client):
-    """Создание твита с прикрепленным медиа"""
+    """
+    Тестирует создание твита с прикрепленным медиа.
+
+    Args:
+        db (Session): Сессия БД из фикстуры
+        client (TestClient): Тестовый клиент FastAPI
+
+    Asserts:
+        - Статус ответа 200
+        - result == True
+    """
     user = User(name="Media Tweet User", api_key="media-tweet-key")
     db.add(user)
     db.commit()
@@ -288,7 +432,17 @@ def test_create_tweet_with_media(db, client):
 
 
 def test_like_tweet_already_liked(db, client):
-    """Повторный лайк твита (должен вернуть True без ошибки)"""
+    """
+    Тестирует повторный лайк твита (должен вернуть True без ошибки).
+
+    Args:
+        db (Session): Сессия БД из фикстуры
+        client (TestClient): Тестовый клиент FastAPI
+
+    Asserts:
+        - Оба запроса возвращают статус 200
+        - Оба запроса возвращают result == True
+    """
     user = User(name="Double Liker", api_key="double-key")
     db.add(user)
     db.commit()
@@ -316,7 +470,17 @@ def test_like_tweet_already_liked(db, client):
 
 
 def test_unlike_tweet_not_liked(db, client):
-    """Удаление лайка с твита, который не лайкали (должен вернуть True)"""
+    """
+    Тестирует удаление лайка с твита, который не лайкали (должен вернуть True).
+
+    Args:
+        db (Session): Сессия БД из фикстуры
+        client (TestClient): Тестовый клиент FastAPI
+
+    Asserts:
+        - Статус ответа 200
+        - result == True
+    """
     user = User(name="Unlike without like", api_key="unlike-key")
     db.add(user)
     db.commit()
@@ -336,7 +500,16 @@ def test_unlike_tweet_not_liked(db, client):
 
 
 def test_follow_user_twice(db, client):
-    """Повторная подписка на пользователя (должна вернуть True)"""
+    """
+    Тестирует повторную подписку на пользователя (должна вернуть True).
+
+    Args:
+        db (Session): Сессия БД из фикстуры
+        client (TestClient): Тестовый клиент FastAPI
+
+    Asserts:
+        - Оба запроса возвращают статус 200
+    """
     user1 = User(name="Follow A", api_key="follow-a")
     user2 = User(name="Follow B", api_key="follow-b")
     db.add_all([user1, user2])
@@ -359,7 +532,17 @@ def test_follow_user_twice(db, client):
 
 
 def test_unfollow_not_following(db, client):
-    """Отписка от пользователя, на которого не подписан"""
+    """
+    Тестирует отписку от пользователя, на которого не подписан.
+
+    Args:
+        db (Session): Сессия БД из фикстуры
+        client (TestClient): Тестовый клиент FastAPI
+
+    Asserts:
+        - Статус ответа 200
+        - result == True
+    """
     user1 = User(name="Not Following", api_key="not-follow")
     user2 = User(name="Target", api_key="target")
     db.add_all([user1, user2])

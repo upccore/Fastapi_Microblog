@@ -16,12 +16,17 @@ os.makedirs("uploads", exist_ok=True)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Управление жизненным циклом приложения"""
+    """
+    Управляет жизненным циклом приложения.
+
+    Args:
+        app (FastAPI): Экземпляр FastAPI приложения
+    """
     if not os.environ.get("TESTING"):
         Base.metadata.create_all(bind=engine)
-        print("✅ Database tables created")
+        print("Database tables created")
     yield
-    print("👋 Shutting down...")
+    print("Shutting down...")
 
 
 app = FastAPI(title="Microblog API", docs_url="/docs", lifespan=lifespan)
@@ -34,7 +39,18 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/uploads/{filename}")
 async def get_uploaded_file(filename: str):
-    """Получить загруженный файл"""
+    """
+    Возвращает загруженный файл по имени.
+
+    Args:
+        filename (str): Имя файла в папке uploads/
+
+    Returns:
+        FileResponse: Файл для скачивания
+
+    Raises:
+        HTTPException: 404 если файл не найден
+    """
     file_path = f"uploads/{filename}"
     if os.path.exists(file_path):
         return FileResponse(file_path)
@@ -43,10 +59,24 @@ async def get_uploaded_file(filename: str):
 
 @app.get("/")
 async def index():
+    """Отдаёт главную HTML страницу (интерфейс микроблога)."""
     return FileResponse("static/index.html")
 
 
 def get_current_user(api_key: str = Header(...), db: Session = Depends(get_db)):
+    """
+    Получает текущего пользователя по api-key из заголовка запроса.
+
+    Args:
+        api_key (str): API ключ из заголовка запроса
+        db (Session): Сессия БД
+
+    Returns:
+        User: Объект пользователя
+
+    Raises:
+        HTTPException: 401 если api-key неверный или отсутствует
+    """
     user = db.query(User).filter(User.api_key == api_key).first()
     if not user:
         raise HTTPException(status_code=401, detail="Invalid api-key")
@@ -59,7 +89,17 @@ def create_tweet(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Создать новый твит"""
+    """
+    Создаёт новый твит.
+
+    Args:
+        tweet (TweetCreate): Данные твита (текст и ID медиа)
+        user (User): Текущий пользователь
+        db (Session): Сессия БД
+
+    Returns:
+        dict: {"result": True, "tweet_id": ID_твита}
+    """
     new_tweet = Tweet(content=tweet.tweet_data, user_id=user.id)
     db.add(new_tweet)
     db.flush()
@@ -78,7 +118,21 @@ def create_tweet(
 def delete_tweet(
     tweet_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
-    """Удалить свой твит"""
+    """
+    Удаляет твит текущего пользователя.
+
+    Args:
+        tweet_id (int): ID твита для удаления
+        user (User): Текущий пользователь
+        db (Session): Сессия БД
+
+    Returns:
+        dict: {"result": True}
+
+    Raises:
+        HTTPException: 404 если твит не найден
+        HTTPException: 403 если попытка удалить чужой твит
+    """
     tweet = db.query(Tweet).filter(Tweet.id == tweet_id).first()
     if not tweet:
         raise HTTPException(status_code=404, detail="Tweet not found")
@@ -96,7 +150,21 @@ async def upload_media(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Загрузить картинку"""
+    """
+    Загружает изображение на сервер и сохраняет запись в БД.
+
+    Args:
+        file (UploadFile): Загружаемый файл (только изображения)
+        user (User): Текущий пользователь
+        db (Session): Сессия БД
+
+    Returns:
+        dict: {"result": True, "media_id": ID_медиа}
+
+    Raises:
+        HTTPException: 400 если файл не изображение или нет имени
+        HTTPException: 500 если ошибка сохранения файла
+    """
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Only images are allowed")
 
@@ -129,7 +197,17 @@ async def upload_media(
 def like_tweet(
     tweet_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
-    """Поставить лайк"""
+    """
+    Ставит лайк твиту.
+
+    Args:
+        tweet_id (int): ID твита
+        user (User): Текущий пользователь
+        db (Session): Сессия БД
+
+    Returns:
+        dict: {"result": True}
+    """
     existing = (
         db.query(Like)
         .filter(Like.user_id == user.id, Like.tweet_id == tweet_id)
@@ -148,7 +226,17 @@ def like_tweet(
 def unlike_tweet(
     tweet_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
-    """Убрать лайк"""
+    """
+    Убирает лайк с твита.
+
+    Args:
+        tweet_id (int): ID твита
+        user (User): Текущий пользователь
+        db (Session): Сессия БД
+
+    Returns:
+        dict: {"result": True}
+    """
     like = (
         db.query(Like)
         .filter(Like.user_id == user.id, Like.tweet_id == tweet_id)
@@ -166,7 +254,21 @@ def unlike_tweet(
 def follow_user(
     user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
-    """Подписаться на пользователя"""
+    """
+    Подписывается на пользователя.
+
+    Args:
+        user_id (int): ID пользователя на которого подписаться
+        user (User): Текущий пользователь
+        db (Session): Сессия БД
+
+    Returns:
+        dict: {"result": True}
+
+    Raises:
+        HTTPException: 400 если попытка подписаться на себя
+        HTTPException: 404 если пользователь не найден
+    """
     if user.id == user_id:
         raise HTTPException(status_code=400, detail="Cannot follow yourself")
 
@@ -192,7 +294,17 @@ def follow_user(
 def unfollow_user(
     user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
-    """Отписаться от пользователя"""
+    """
+    Отписывается от пользователя.
+
+    Args:
+        user_id (int): ID пользователя от которого отписаться
+        user (User): Текущий пользователь
+        db (Session): Сессия БД
+
+    Returns:
+        dict: {"result": True}
+    """
     follow = (
         db.query(Follow)
         .filter(Follow.follower_id == user.id, Follow.following_id == user_id)
@@ -208,7 +320,16 @@ def unfollow_user(
 
 @app.get("/api/tweets")
 def get_timeline(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Получить ленту твитов, отсортированных по лайкам от подписок"""
+    """
+    Получает ленту твитов, отсортированных по лайкам от подписок.
+
+    Args:
+        user (User): Текущий пользователь
+        db (Session): Сессия БД
+
+    Returns:
+        dict: {"result": True, "tweets": list}
+    """
 
     # Получаем ID подписок
     following_ids = {f.following_id for f in user.following}
@@ -249,7 +370,15 @@ def get_timeline(user: User = Depends(get_current_user), db: Session = Depends(g
 def get_my_profile(
     user: User = Depends(get_current_user),
 ):
-    """Получить информацию о своем профиле"""
+    """
+    Получает информацию о своём профиле (подписчики, подписки).
+
+    Args:
+        user (User): Текущий пользователь
+
+    Returns:
+        dict: {"result": True, "user": dict}
+    """
 
     followers = [{"id": f.follower.id, "name": f.follower.name} for f in user.followers]
 
@@ -272,7 +401,20 @@ def get_my_profile(
 def get_user_profile(
     user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
-    """Получить информацию о профиле другого пользователя по id"""
+    """
+    Получает информацию о профиле другого пользователя по ID.
+
+    Args:
+        user_id (int): ID пользователя
+        user (User): Текущий пользователь
+        db (Session): Сессия БД
+
+    Returns:
+        dict: {"result": True, "user": dict}
+
+    Raises:
+        HTTPException: 404 если пользователь не найден
+    """
 
     target_user = db.query(User).filter(User.id == user_id).first()
     if not target_user:
