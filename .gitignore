@@ -8,6 +8,8 @@ venv/
 env/
 ENV/
 .env
+.env.*
+!.env.template
 .venv
 
 # IDE
