@@ -21,7 +21,7 @@ ENV/
 .idea/misc.xml
 
 # Project files
-uploads/
+media/
 test.db
 *.db
 *.sqlite
