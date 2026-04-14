@@ -19,4 +19,4 @@ for user in users:
 db.commit()
 db.close()
 print("Тестовые пользователи созданы!")
-print("api-key     Имя\nalice123    Alice\nbob123      Bob\ncharlie123  Charlie")
+print("api-key     Имя\nalice123    Alice\nbob123      Bob\ncharlie123  Charlie\ntest  Test User")

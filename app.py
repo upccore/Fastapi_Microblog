@@ -1,6 +1,7 @@
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime
+from pathlib import Path
 
 from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
 from fastapi.responses import FileResponse
@@ -10,7 +11,8 @@ from database import Base, engine, get_db
 from models import Follow, Like, Media, Tweet, User
 from schemas import MediaResponse, SimpleResponse, TweetCreate, TweetIdResponse
 
-os.makedirs("uploads", exist_ok=True)
+MEDIA_DIR = Path("media")
+MEDIA_DIR.mkdir(exist_ok=True)
 
 
 @asynccontextmanager
@@ -31,23 +33,24 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Microblog API", docs_url="/docs", lifespan=lifespan)
 
 
-@app.get("/uploads/{filename}")
-async def get_uploaded_file(filename: str):
+@app.get("/media/{filename}")
+async def get_media_file(filename: str):
     """
-    Возвращает загруженный файл по имени.
+    Возвращает медиа-файл по имени.
+    В production запросы обрабатывает Nginx.
 
     Args:
-        filename (str): Имя файла в папке uploads/
+        filename (str): Имя файла в папке media/
 
     Returns:
-        FileResponse: Файл для скачивания
+        FileResponse: Файл
 
     Raises:
         HTTPException: 404 если файл не найден
     """
-    file_path = f"uploads/{filename}"
-    if os.path.exists(file_path):
-        return FileResponse(file_path)
+    file_path = MEDIA_DIR / filename
+    if file_path.exists():
+        return FileResponse(str(file_path))
     raise HTTPException(status_code=404, detail="File not found")
 
 
@@ -167,8 +170,9 @@ async def upload_media(
 
     # Безопасное имя файла
     original_filename = file.filename.replace(" ", "_")
-    filename = f"{datetime.now().timestamp()}_{original_filename}"
-    filepath = f"uploads/{filename}"
+    timestamp = datetime.now().timestamp()
+    filename = f"{timestamp}_{original_filename}"
+    filepath = MEDIA_DIR / filename
 
     # Сохранение файла
     try:
@@ -179,7 +183,7 @@ async def upload_media(
         raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
 
     # Сохранение в БД
-    media = Media(file_path=filepath)
+    media = Media(file_path=str(filepath))
     db.add(media)
     db.commit()
     db.refresh(media)
@@ -347,7 +351,7 @@ def get_timeline(user: User = Depends(get_current_user), db: Session = Depends(g
                 "id": tweet.id,
                 "content": tweet.content,
                 "attachments": [
-                    f"/uploads/{m.file_path.split('/')[-1]}" for m in tweet.attachments
+                    f"/media/{Path(m.file_path).name}" for m in tweet.attachments
                 ],
                 "author": {"id": tweet.author.id, "name": tweet.author.name},
                 "likes": [
