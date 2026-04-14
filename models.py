@@ -19,6 +19,7 @@ class User(Base):
         following (List[Follow]): Список подписок (на кого подписан)
         followers (List[Follow]): Список подписчиков (кто подписан)
     """
+
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -48,6 +49,7 @@ class Tweet(Base):
         likes (List[Like]): Список лайков твита
         attachments (List[Media]): Список прикреплённых медиафайлов
     """
+
     __tablename__ = "tweets"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -71,6 +73,7 @@ class Like(Base):
         user (User): Объект пользователя (связь)
         tweet (Tweet): Объект твита (связь)
     """
+
     __tablename__ = "likes"
 
     id = Column(Integer, primary_key=True)
@@ -92,6 +95,7 @@ class Follow(Base):
         follower (User): Объект подписчика (связь)
         following (User): Объект цели подписки (связь)
     """
+
     __tablename__ = "follows"
 
     id = Column(Integer, primary_key=True)
@@ -116,6 +120,7 @@ class Media(Base):
         tweet_id (int|None): ID твита к которому прикреплён (может быть None)
         tweet (Tweet|None): Объект твита (связь)
     """
+
     __tablename__ = "media"
 
     id = Column(Integer, primary_key=True)

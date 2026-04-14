@@ -11,6 +11,7 @@ class TweetCreate(BaseModel):
         tweet_data (str): Текст твита
         tweet_media_ids (Optional[List[int]]): Список ID прикреплённых изображений
     """
+
     tweet_data: str
     tweet_media_ids: Optional[List[int]] = []
 
@@ -26,6 +27,7 @@ class TweetResponse(BaseModel):
         author (dict): Информация об авторе (id, name)
         likes (List[dict]): Список лайков с информацией о пользователях
     """
+
     id: int
     content: str
     attachments: List[str]
@@ -43,6 +45,7 @@ class UserResponse(BaseModel):
         followers (List[dict]): Список подписчиков
         following (List[dict]): Список подписок
     """
+
     id: int
     name: str
     followers: List[dict]
@@ -57,6 +60,7 @@ class MediaResponse(BaseModel):
         result (bool): Статус операции (True/False)
         media_id (int): ID загруженного медиафайла
     """
+
     result: bool
     media_id: int
 
@@ -69,6 +73,7 @@ class TweetIdResponse(BaseModel):
         result (bool): Статус операции (True/False)
         tweet_id (int): ID созданного твита
     """
+
     result: bool
     tweet_id: int
 
@@ -80,4 +85,5 @@ class SimpleResponse(BaseModel):
     Attributes:
         result (bool): Статус операции (True/False)
     """
+
     result: bool
