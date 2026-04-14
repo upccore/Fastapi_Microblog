@@ -4,7 +4,6 @@ from datetime import datetime
 
 from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
 from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
 from database import Base, engine, get_db
@@ -30,11 +29,6 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Microblog API", docs_url="/docs", lifespan=lifespan)
-
-# Монтируем папки со статикой
-app.mount("/css", StaticFiles(directory="static/css"), name="css")
-app.mount("/js", StaticFiles(directory="static/js"), name="js")
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 @app.get("/uploads/{filename}")
@@ -85,9 +79,9 @@ def get_current_user(api_key: str = Header(...), db: Session = Depends(get_db)):
 
 @app.post("/api/tweets", response_model=TweetIdResponse)
 def create_tweet(
-    tweet: TweetCreate,
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+        tweet: TweetCreate,
+        user: User = Depends(get_current_user),
+        db: Session = Depends(get_db),
 ):
     """
     Создаёт новый твит.
@@ -116,7 +110,7 @@ def create_tweet(
 
 @app.delete("/api/tweets/{tweet_id}", response_model=SimpleResponse)
 def delete_tweet(
-    tweet_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+        tweet_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """
     Удаляет твит текущего пользователя.
@@ -146,9 +140,9 @@ def delete_tweet(
 
 @app.post("/api/medias", response_model=MediaResponse)
 async def upload_media(
-    file: UploadFile = File(...),
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+        file: UploadFile = File(...),
+        user: User = Depends(get_current_user),
+        db: Session = Depends(get_db),
 ):
     """
     Загружает изображение на сервер и сохраняет запись в БД.
@@ -195,7 +189,7 @@ async def upload_media(
 
 @app.post("/api/tweets/{tweet_id}/likes", response_model=SimpleResponse)
 def like_tweet(
-    tweet_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+        tweet_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """
     Ставит лайк твиту.
@@ -224,7 +218,7 @@ def like_tweet(
 
 @app.delete("/api/tweets/{tweet_id}/likes", response_model=SimpleResponse)
 def unlike_tweet(
-    tweet_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+        tweet_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """
     Убирает лайк с твита.
@@ -252,7 +246,7 @@ def unlike_tweet(
 
 @app.post("/api/users/{user_id}/follow", response_model=SimpleResponse)
 def follow_user(
-    user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+        user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """
     Подписывается на пользователя.
@@ -292,7 +286,7 @@ def follow_user(
 
 @app.delete("/api/users/{user_id}/follow", response_model=SimpleResponse)
 def unfollow_user(
-    user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+        user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """
     Отписывается от пользователя.
@@ -368,7 +362,7 @@ def get_timeline(user: User = Depends(get_current_user), db: Session = Depends(g
 
 @app.get("/api/users/me")
 def get_my_profile(
-    user: User = Depends(get_current_user),
+        user: User = Depends(get_current_user),
 ):
     """
     Получает информацию о своём профиле (подписчики, подписки).
@@ -399,7 +393,7 @@ def get_my_profile(
 
 @app.get("/api/users/{user_id}")
 def get_user_profile(
-    user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+        user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """
     Получает информацию о профиле другого пользователя по ID.
