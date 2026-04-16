@@ -11,8 +11,8 @@ from database import Base, engine, get_db
 from models import Follow, Like, Media, Tweet, User
 from schemas import MediaResponse, SimpleResponse, TweetCreate, TweetIdResponse
 
-MEDIA_DIR = Path("media")
-MEDIA_DIR.mkdir(exist_ok=True)
+MEDIA_DIR = Path("/app/media")
+MEDIA_DIR.mkdir(exist_ok=True, parents=True)
 
 
 @asynccontextmanager
@@ -57,7 +57,7 @@ async def get_media_file(filename: str):
 @app.get("/")
 async def index():
     """Отдаёт главную HTML страницу (интерфейс микроблога)."""
-    return FileResponse("static/index.html")
+    return FileResponse("client/static/index.html")
 
 
 def get_current_user(api_key: str = Header(...), db: Session = Depends(get_db)):
