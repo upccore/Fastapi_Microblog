@@ -1,3 +1,5 @@
-import os
+from pathlib import Path
 
-MEDIA_DIR = os.getenv("MEDIA_DIR", "media")
+BASE_DIR = Path("/app")
+MEDIA_DIR = BASE_DIR / "media"
+MEDIA_DIR.mkdir(exist_ok=True, parents=True)
