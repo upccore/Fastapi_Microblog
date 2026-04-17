@@ -6,8 +6,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from server.app.db.database import Base, get_db
-from server.app.main import app
+from app.db.database import Base, get_db
+from app.main import app
 
 # Устанавливаем переменную окружения для тестов
 os.environ["TESTING"] = "true"
