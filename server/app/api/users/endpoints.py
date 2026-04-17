@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.db.models import User, Follow
 from app.db.schemas import SimpleResponse
-from app.main import get_current_user, app
+from app.dependencies import get_current_user
+from app.config import MEDIA_DIR
 
 router = APIRouter(prefix="/users", tags=["users"])
 
