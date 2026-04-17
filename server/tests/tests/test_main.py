@@ -1,4 +1,4 @@
-from models import Tweet, User
+from server.app.db.models import User, Tweet
 
 
 def test_create_tweet(db, client):

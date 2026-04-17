@@ -36,20 +36,17 @@
 ### Быстрый старт
 
 ```bash
-# 1. Перейти в папку с проектом
-cd fastapi-microblog
-
-# 2. Запустить контейнеры
+cd server
 docker-compose up --build -d
-
-# 3. Создать тестовых пользователей
-docker-compose exec web python seed.py
+docker-compose exec web python app/db/seed.py
+# Открыть: http://localhost:5000/docs
 
 Пользователи для теста:
 api-key     Имя
 alice123    Alice
 bob123      Bob
 charlie123  Charlie
+test        Test User
 
 # 4. Проверить что всё работает
 # Открыть в браузере: http://localhost:5000/docs

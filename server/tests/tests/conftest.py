@@ -6,11 +6,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from server.app.db.database import Base, get_db
+from server.app.main import app
+
 # Устанавливаем переменную окружения для тестов
 os.environ["TESTING"] = "true"
 
-from app import app
-from database import Base, get_db
+
 
 # Тестовая БД - SQLite в памяти
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
