@@ -6,11 +6,11 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
-from db.database import Base, engine, get_db
-from db.models import User
+from app.db.database import Base, engine, get_db
+from app.db.models import User
 
-from server.app.api.tweets.endpoints import router as tweets_router
-from server.app.api.users.endpoints import router as users_router
+from app.api.tweets.endpoints import router as tweets_router
+from app.api.users.endpoints import router as users_router
 
 Base.metadata.create_all(bind=engine)
 

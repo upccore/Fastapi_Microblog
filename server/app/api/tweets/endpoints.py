@@ -2,11 +2,11 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Path, UploadFile
 from sqlalchemy.orm import Session
-from server.app.db.database import get_db
-from server.app.db.models import User, Tweet, Media, Like
-from server.app.db.schemas import TweetIdResponse, TweetCreate, SimpleResponse, MediaResponse
+from app.db.database import get_db
+from app.db.models import User, Tweet, Media, Like
+from app.db.schemas import TweetIdResponse, TweetCreate, SimpleResponse, MediaResponse
 from fastapi.responses import FileResponse
-from server.app.main import app, get_current_user, MEDIA_DIR
+from app.main import app, get_current_user, MEDIA_DIR
 from fastapi import File
 
 router = APIRouter(prefix="/tweets", tags=["tweets"])
