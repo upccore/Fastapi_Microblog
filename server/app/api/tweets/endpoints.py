@@ -13,7 +13,7 @@ from fastapi import File
 router = APIRouter(prefix="/tweets", tags=["tweets"])
 
 
-@router.post("/tweets", response_model=TweetIdResponse)
+@router.post("", response_model=TweetIdResponse)
 def create_tweet(
         tweet: TweetCreate,
         user: User = Depends(get_current_user),
@@ -44,7 +44,7 @@ def create_tweet(
     return {"result": True, "tweet_id": new_tweet.id}
 
 
-@router.delete("/tweets/{tweet_id}", response_model=SimpleResponse)
+@router.delete("/{tweet_id}", response_model=SimpleResponse)
 def delete_tweet(
         tweet_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
@@ -74,7 +74,7 @@ def delete_tweet(
     return {"result": True}
 
 
-@router.post("/tweets/{tweet_id}/likes", response_model=SimpleResponse)
+@router.post("/{tweet_id}/likes", response_model=SimpleResponse)
 def like_tweet(
         tweet_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
@@ -103,7 +103,7 @@ def like_tweet(
     return {"result": True}
 
 
-@router.delete("/tweets/{tweet_id}/likes", response_model=SimpleResponse)
+@router.delete("/{tweet_id}/likes", response_model=SimpleResponse)
 def unlike_tweet(
         tweet_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
@@ -131,7 +131,7 @@ def unlike_tweet(
     return {"result": True}
 
 
-@router.get("/tweets")
+@router.get("")
 def get_timeline(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """
     Получает ленту твитов.

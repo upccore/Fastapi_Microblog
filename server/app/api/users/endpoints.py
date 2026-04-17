@@ -10,7 +10,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 
 # Перенесите сюда эндпоинты пользователей (профиль, подписки)
-@router.get("/users/me")
+@router.get("/me")
 def get_my_profile(
     user: User = Depends(get_current_user),
 ):
@@ -41,7 +41,7 @@ def get_my_profile(
     }
 
 
-@router.get("/users/{user_id}")
+@router.get("/{user_id}")
 def get_user_profile(
     user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
@@ -82,7 +82,7 @@ def get_user_profile(
         },
     }
 
-@router.post("/users/{user_id}/follow", response_model=SimpleResponse)
+@router.post("/{user_id}/follow", response_model=SimpleResponse)
 def follow_user(
     user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
@@ -121,7 +121,7 @@ def follow_user(
 
     return {"result": True}
 
-@router.delete("/users/{user_id}/follow", response_model=SimpleResponse)
+@router.delete("/{user_id}/follow", response_model=SimpleResponse)
 def unfollow_user(
     user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
