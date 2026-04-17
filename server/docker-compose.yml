@@ -34,7 +34,7 @@ services:
     restart: unless-stopped
 
   client:
-    build: ./client
+    build: ../client
     container_name: microblog_client
     ports:
       - "80:80"
