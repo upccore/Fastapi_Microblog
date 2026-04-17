@@ -1,6 +1,7 @@
 from datetime import datetime
+from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, Path, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.db.models import User, Tweet, Media, Like
