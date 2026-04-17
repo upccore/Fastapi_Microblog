@@ -6,7 +6,8 @@ from app.db.database import get_db
 from app.db.models import User, Tweet, Media, Like
 from app.db.schemas import TweetIdResponse, TweetCreate, SimpleResponse, MediaResponse
 from fastapi.responses import FileResponse
-from app.main import app, get_current_user, MEDIA_DIR
+from app.dependencies import get_current_user
+from app.config import MEDIA_DIR
 from fastapi import File
 
 router = APIRouter(prefix="/tweets", tags=["tweets"])
