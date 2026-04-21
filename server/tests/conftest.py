@@ -12,8 +12,6 @@ from app.main import app
 # Устанавливаем переменную окружения для тестов
 os.environ["TESTING"] = "true"
 
-
-
 # Тестовая БД - SQLite в памяти
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 engine = create_engine(
@@ -27,9 +25,10 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 @pytest.fixture(scope="session", autouse=True)
 def setup_database():
     """
-    Создаёт таблицы один раз для всех тестов.
+    Фикстура создания и удаления таблиц для всей сессии тестов.
 
-    Scope: session - выполняется один раз за сессию тестирования
+    Returns:
+        None
     """
     Base.metadata.create_all(bind=engine)
     yield
@@ -39,12 +38,10 @@ def setup_database():
 @pytest.fixture(scope="function")
 def db():
     """
-    Фикстура сессии БД с изоляцией транзакций.
+    Фикстура сессии БД с откатом после каждого теста.
 
-    Scope: function - новая сессия для каждого теста
-
-    Yields:
-        Session: Сессия SQLAlchemy
+    Returns:
+        Session: Сессия SQLAlchemy.
     """
     connection = engine.connect()
     transaction = connection.begin()
@@ -60,15 +57,14 @@ def db():
 @pytest.fixture(scope="function")
 def client(db):
     """
-    Фикстура тестового клиента с переопределённой БД.
+    Фикстура тестового клиента FastAPI.
 
     Args:
-        db (Session): Сессия БД из фикстуры
+        db: Фикстура сессии БД.
 
-    Yields:
-        TestClient: Клиент FastAPI для тестирования эндпоинтов
+    Returns:
+        TestClient: Клиент для HTTP-запросов.
     """
-
     def override_get_db():
         try:
             yield db

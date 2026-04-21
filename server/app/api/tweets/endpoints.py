@@ -21,15 +21,15 @@ def create_tweet(
         db: Session = Depends(get_db),
 ):
     """
-    Создаёт новый твит.
+    Создание нового твита.
 
     Args:
-        tweet (TweetCreate): Данные твита (текст и ID медиа)
-        user (User): Текущий пользователь
-        db (Session): Сессия БД
+        tweet: Данные твита.
+        user: Автор твита.
+        db: Сессия БД.
 
     Returns:
-        dict: {"result": True, "tweet_id": ID_твита}
+        dict: {"result": True, "tweet_id": int}.
     """
     new_tweet = Tweet(content=tweet.tweet_data, user_id=user.id)
     db.add(new_tweet)
@@ -50,19 +50,19 @@ def delete_tweet(
         tweet_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """
-    Удаляет твит текущего пользователя.
+    Удаление своего твита.
 
     Args:
-        tweet_id (int): ID твита для удаления
-        user (User): Текущий пользователь
-        db (Session): Сессия БД
+        tweet_id: ID твита.
+        user: Текущий пользователь.
+        db: Сессия БД.
 
     Returns:
-        dict: {"result": True}
+        dict: {"result": True}.
 
     Raises:
-        HTTPException: 404 если твит не найден
-        HTTPException: 403 если попытка удалить чужой твит
+        HTTPException: 404 если твит не найден.
+        HTTPException: 403 если твит чужой.
     """
     tweet = db.query(Tweet).filter(Tweet.id == tweet_id).first()
     if not tweet:
@@ -80,15 +80,15 @@ def like_tweet(
         tweet_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """
-    Ставит лайк твиту.
+    Лайк твита (идемпотентный).
 
     Args:
-        tweet_id (int): ID твита
-        user (User): Текущий пользователь
-        db (Session): Сессия БД
+        tweet_id: ID твита.
+        user: Текущий пользователь.
+        db: Сессия БД.
 
     Returns:
-        dict: {"result": True}
+        dict: {"result": True}.
     """
     existing = (
         db.query(Like)
@@ -109,15 +109,15 @@ def unlike_tweet(
         tweet_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """
-    Убирает лайк с твита.
+    Снятие лайка с твита.
 
     Args:
-        tweet_id (int): ID твита
-        user (User): Текущий пользователь
-        db (Session): Сессия БД
+        tweet_id: ID твита.
+        user: Текущий пользователь.
+        db: Сессия БД.
 
     Returns:
-        dict: {"result": True}
+        dict: {"result": True}.
     """
     like = (
         db.query(Like)
@@ -135,10 +135,19 @@ def unlike_tweet(
 @router.get("")
 def get_timeline(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """
-    Получает ленту твитов.
-    Сначала самые залайканные твиты от подписок,
-    потом остальные твиты от подписок,
-    затем твиты от остальных пользователей.
+    Получение ленты твитов.
+
+    Сортировка:
+    1. Твиты подписок, отсортированные по убыванию лайков от подписок.
+    2. Остальные твиты подписок (новые сверху).
+    3. Твиты остальных пользователей (новые сверху).
+
+    Args:
+        user: Текущий пользователь.
+        db: Сессия БД.
+
+    Returns:
+        dict: {"result": True, "tweets": list}.
     """
     following_ids = {f.following_id for f in user.following}
     all_tweets = db.query(Tweet).all()
@@ -203,17 +212,16 @@ def get_timeline(user: User = Depends(get_current_user), db: Session = Depends(g
 @router.get("/{filename}")
 async def get_media_file(filename: str):
     """
-    Возвращает медиа-файл по имени.
-    В production запросы обрабатывает Nginx.
+    Отдача медиафайла по имени.
 
     Args:
-        filename (str): Имя файла в папке media/
+        filename: Имя файла в папке media.
 
     Returns:
-        FileResponse: Файл
+        FileResponse: Файл изображения.
 
     Raises:
-        HTTPException: 404 если файл не найден
+        HTTPException: 404 если файл не найден.
     """
     file_path = MEDIA_DIR / filename
     if file_path.exists():
@@ -223,24 +231,24 @@ async def get_media_file(filename: str):
 
 @router.post("/medias", response_model=MediaResponse)
 async def upload_media(
-    file: UploadFile = File(...),
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+        file: UploadFile = File(...),
+        user: User = Depends(get_current_user),
+        db: Session = Depends(get_db),
 ):
     """
-    Загружает изображение на сервер и сохраняет запись в БД.
+    Загрузка изображения для последующей привязки к твиту.
 
     Args:
-        file (UploadFile): Загружаемый файл (только изображения)
-        user (User): Текущий пользователь
-        db (Session): Сессия БД
+        file: Загружаемый файл (только изображения).
+        user: Текущий пользователь.
+        db: Сессия БД.
 
     Returns:
-        dict: {"result": True, "media_id": ID_медиа}
+        dict: {"result": True, "media_id": int}.
 
     Raises:
-        HTTPException: 400 если файл не изображение или нет имени
-        HTTPException: 500 если ошибка сохранения файла
+        HTTPException: 400 если файл не изображение или без имени.
+        HTTPException: 500 при ошибке сохранения.
     """
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Only images are allowed")

@@ -1,10 +1,7 @@
 import os
 from contextlib import asynccontextmanager
-from pathlib import Path
 
-from fastapi import Depends, FastAPI, Header, HTTPException
-from fastapi.responses import FileResponse
-from sqlalchemy.orm import Session
+from fastapi import FastAPI
 
 from app.db.database import Base, engine, get_db
 from app.db.models import User
@@ -16,10 +13,15 @@ from app.api.users.endpoints import router as users_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
-    Управляет жизненным циклом приложения.
+    Контекст жизненного цикла приложения.
+
+    Создаёт таблицы БД при старте (вне тестового режима).
 
     Args:
-        app (FastAPI): Экземпляр FastAPI приложения
+        app: Экземпляр FastAPI.
+
+    Yields:
+        None
     """
     if not os.environ.get("TESTING"):
         Base.metadata.create_all(bind=engine)

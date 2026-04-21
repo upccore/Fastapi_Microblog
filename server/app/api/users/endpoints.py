@@ -9,21 +9,19 @@ from app.config import MEDIA_DIR
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-# Перенесите сюда эндпоинты пользователей (профиль, подписки)
 @router.get("/me")
 def get_my_profile(
-    user: User = Depends(get_current_user),
+        user: User = Depends(get_current_user),
 ):
     """
-    Получает информацию о своём профиле (подписчики, подписки).
+    Получение профиля текущего пользователя.
 
     Args:
-        user (User): Текущий пользователь
+        user: Текущий пользователь.
 
     Returns:
-        dict: {"result": True, "user": dict}
+        dict: Профиль с подписчиками и подписками.
     """
-
     followers = [{"id": f.follower.id, "name": f.follower.name} for f in user.followers]
 
     following = [
@@ -43,23 +41,22 @@ def get_my_profile(
 
 @router.get("/{user_id}")
 def get_user_profile(
-    user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+        user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """
-    Получает информацию о профиле другого пользователя по ID.
+    Получение профиля другого пользователя по ID.
 
     Args:
-        user_id (int): ID пользователя
-        user (User): Текущий пользователь
-        db (Session): Сессия БД
+        user_id: ID целевого пользователя.
+        user: Текущий пользователь.
+        db: Сессия БД.
 
     Returns:
-        dict: {"result": True, "user": dict}
+        dict: Профиль пользователя.
 
     Raises:
-        HTTPException: 404 если пользователь не найден
+        HTTPException: 404 если пользователь не найден.
     """
-
     target_user = db.query(User).filter(User.id == user_id).first()
     if not target_user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -82,24 +79,25 @@ def get_user_profile(
         },
     }
 
+
 @router.post("/{user_id}/follow", response_model=SimpleResponse)
 def follow_user(
-    user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+        user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """
-    Подписывается на пользователя.
+    Подписка на пользователя.
 
     Args:
-        user_id (int): ID пользователя на которого подписаться
-        user (User): Текущий пользователь
-        db (Session): Сессия БД
+        user_id: ID целевого пользователя.
+        user: Текущий пользователь.
+        db: Сессия БД.
 
     Returns:
-        dict: {"result": True}
+        dict: {"result": True}.
 
     Raises:
-        HTTPException: 400 если попытка подписаться на себя
-        HTTPException: 404 если пользователь не найден
+        HTTPException: 400 при попытке подписаться на себя.
+        HTTPException: 404 если пользователь не найден.
     """
     if user.id == user_id:
         raise HTTPException(status_code=400, detail="Cannot follow yourself")
@@ -121,20 +119,21 @@ def follow_user(
 
     return {"result": True}
 
+
 @router.delete("/{user_id}/follow", response_model=SimpleResponse)
 def unfollow_user(
-    user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+        user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """
-    Отписывается от пользователя.
+    Отписка от пользователя.
 
     Args:
-        user_id (int): ID пользователя от которого отписаться
-        user (User): Текущий пользователь
-        db (Session): Сессия БД
+        user_id: ID целевого пользователя.
+        user: Текущий пользователь.
+        db: Сессия БД.
 
     Returns:
-        dict: {"result": True}
+        dict: {"result": True}.
     """
     follow = (
         db.query(Follow)
