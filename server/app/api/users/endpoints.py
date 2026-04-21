@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.config import MEDIA_DIR
 from app.db.database import get_db
 from app.db.models import Follow, User
 from app.db.schemas import SimpleResponse
