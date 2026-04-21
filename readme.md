@@ -25,7 +25,6 @@
 | Pydantic | 2.12.5  | Валидация данных |
 | Uvicorn | 0.44.0  | ASGI сервер |
 | Docker | 4.67.0  | Контейнеризация |
-| Pytest | 7.4.3   | Тестирование |
 
 ## 🐳 Запуск через Docker
 
@@ -39,7 +38,6 @@
 cd server
 docker-compose up --build -d
 docker-compose exec web python app/db/seed.py
-# Открыть: http://localhost:5000/docs
 
 Пользователи для теста:
 api-key     Имя
