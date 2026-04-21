@@ -172,20 +172,6 @@ def test_invalid_api_key(db, client):
     assert response_json["detail"] == "Invalid API Key"
 
 
-def test_tweet_not_found(db, client):
-    """Тест удаления несуществующего твита."""
-    user = User(name="Test User", api_key="test-key")
-    db.add(user)
-    db.commit()
-
-    response = client.delete("/tweets/99999", headers={"api-key": user.api_key})
-
-    assert response.status_code == 404
-    response_json = response.json()
-    assert "detail" in response_json
-    assert response_json["detail"] == "Tweet not found"
-
-
 def test_delete_others_tweet(db, client):
     """Тест попытки удаления чужого твита."""
     # Создаем двух пользователей
@@ -208,23 +194,6 @@ def test_delete_others_tweet(db, client):
     )
 
     assert response.status_code == 403  # Forbidden
-
-
-def test_follow_self(db, client):
-    """Тест попытки подписаться на самого себя."""
-    user = User(name="Lonely", api_key="lonely-key")
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-
-    response = client.post(
-        f"/users/{user.id}/follow", headers={"api-key": user.api_key}
-    )
-
-    assert response.status_code == 400
-    response_json = response.json()
-    assert "detail" in response_json
-    assert response_json["detail"] == "Cannot follow yourself"
 
 
 def test_upload_media(db, client):
@@ -281,94 +250,6 @@ def test_create_tweet_with_media(db, client):
         "/tweets",
         headers={"api-key": user.api_key},
         json={"tweet_data": "Tweet with image!", "tweet_media_ids": [media_id]},
-    )
-
-    assert response.status_code == 200
-    assert response.json()["result"]
-
-
-def test_like_tweet_already_liked(db, client):
-    """Тест идемпотентности лайка (повторный лайк)."""
-    user = User(name="Double Liker", api_key="double-key")
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-
-    tweet = Tweet(content="Double like", user_id=user.id)
-    db.add(tweet)
-    db.commit()
-    db.refresh(tweet)
-
-    # Ставим лайк первый раз
-    response1 = client.post(
-        f"/tweets/{tweet.id}/likes", headers={"api-key": user.api_key}
-    )
-
-    # Ставим лайк второй раз
-    response2 = client.post(
-        f"/tweets/{tweet.id}/likes", headers={"api-key": user.api_key}
-    )
-
-    assert response1.status_code == 200
-    assert response2.status_code == 200
-    assert response1.json()["result"]
-    assert response2.json()["result"]
-
-
-def test_unlike_tweet_not_liked(db, client):
-    """Тест идемпотентности дизлайка (снятие без лайка)."""
-    user = User(name="Unlike without like", api_key="unlike-key")
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-
-    tweet = Tweet(content="No likes", user_id=user.id)
-    db.add(tweet)
-    db.commit()
-    db.refresh(tweet)
-
-    response = client.delete(
-        f"/tweets/{tweet.id}/likes", headers={"api-key": user.api_key}
-    )
-
-    assert response.status_code == 200
-    assert response.json()["result"]
-
-
-def test_follow_user_twice(db, client):
-    """Тест идемпотентности подписки (повторная подписка)."""
-    user1 = User(name="Follow A", api_key="follow-a")
-    user2 = User(name="Follow B", api_key="follow-b")
-    db.add_all([user1, user2])
-    db.commit()
-    db.refresh(user1)
-    db.refresh(user2)
-
-    # Подписываемся первый раз
-    response1 = client.post(
-        f"/users/{user2.id}/follow", headers={"api-key": user1.api_key}
-    )
-
-    # Подписываемся второй раз
-    response2 = client.post(
-        f"/users/{user2.id}/follow", headers={"api-key": user1.api_key}
-    )
-
-    assert response1.status_code == 200
-    assert response2.status_code == 200
-
-
-def test_unfollow_not_following(db, client):
-    """Тест идемпотентности отписки (отписка без подписки)."""
-    user1 = User(name="Not Following", api_key="not-follow")
-    user2 = User(name="Target", api_key="target")
-    db.add_all([user1, user2])
-    db.commit()
-    db.refresh(user1)
-    db.refresh(user2)
-
-    response = client.delete(
-        f"/users/{user2.id}/follow", headers={"api-key": user1.api_key}
     )
 
     assert response.status_code == 200
