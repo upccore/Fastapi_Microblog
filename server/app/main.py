@@ -3,11 +3,10 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.db.database import Base, engine, get_db
-from app.db.models import User
-
 from app.api.tweets.endpoints import router as tweets_router
 from app.api.users.endpoints import router as users_router
+from app.db.database import Base, engine, get_db
+from app.db.models import User
 
 
 @asynccontextmanager

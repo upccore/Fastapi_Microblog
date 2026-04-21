@@ -1,24 +1,24 @@
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile
-from sqlalchemy.orm import Session
-from app.db.database import get_db
-from app.db.models import User, Tweet, Media, Like
-from app.db.schemas import TweetIdResponse, TweetCreate, SimpleResponse, MediaResponse
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
-from app.dependencies import get_current_user
+from sqlalchemy.orm import Session
+
 from app.config import MEDIA_DIR
-from fastapi import File
+from app.db.database import get_db
+from app.db.models import Like, Media, Tweet, User
+from app.db.schemas import MediaResponse, SimpleResponse, TweetCreate, TweetIdResponse
+from app.dependencies import get_current_user
 
 router = APIRouter(prefix="/tweets", tags=["tweets"])
 
 
 @router.post("", response_model=TweetIdResponse)
 def create_tweet(
-        tweet: TweetCreate,
-        user: User = Depends(get_current_user),
-        db: Session = Depends(get_db),
+    tweet: TweetCreate,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """
     Создание нового твита.
@@ -47,7 +47,7 @@ def create_tweet(
 
 @router.delete("/{tweet_id}", response_model=SimpleResponse)
 def delete_tweet(
-        tweet_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    tweet_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """
     Удаление своего твита.
@@ -77,7 +77,7 @@ def delete_tweet(
 
 @router.post("/{tweet_id}/likes", response_model=SimpleResponse)
 def like_tweet(
-        tweet_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    tweet_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """
     Лайк твита (идемпотентный).
@@ -106,7 +106,7 @@ def like_tweet(
 
 @router.delete("/{tweet_id}/likes", response_model=SimpleResponse)
 def unlike_tweet(
-        tweet_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    tweet_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """
     Снятие лайка с твита.
@@ -184,9 +184,9 @@ def get_timeline(user: User = Depends(get_current_user), db: Session = Depends(g
     # 2. Остальные от подписок (other_from_following)
     # 3. От остальных (from_others)
     sorted_tweets = (
-            [t[0] for t in liked_by_following] +  # ← ВВЕРХУ
-            [t[0] for t in other_from_following] +  # ← ПОСЕРЕДИНЕ
-            [t[0] for t in from_others]  # ← ВНИЗУ
+        [t[0] for t in liked_by_following]  # ← ВВЕРХУ
+        + [t[0] for t in other_from_following]  # ← ПОСЕРЕДИНЕ
+        + [t[0] for t in from_others]  # ← ВНИЗУ
     )
 
     return {
@@ -231,9 +231,9 @@ async def get_media_file(filename: str):
 
 @router.post("/medias", response_model=MediaResponse)
 async def upload_media(
-        file: UploadFile = File(...),
-        user: User = Depends(get_current_user),
-        db: Session = Depends(get_db),
+    file: UploadFile = File(...),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """
     Загрузка изображения для последующей привязки к твиту.

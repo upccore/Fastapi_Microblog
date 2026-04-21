@@ -65,6 +65,7 @@ def client(db):
     Returns:
         TestClient: Клиент для HTTP-запросов.
     """
+
     def override_get_db():
         try:
             yield db

@@ -1,17 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
+from app.config import MEDIA_DIR
 from app.db.database import get_db
-from app.db.models import User, Follow
+from app.db.models import Follow, User
 from app.db.schemas import SimpleResponse
 from app.dependencies import get_current_user
-from app.config import MEDIA_DIR
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 
 @router.get("/me")
 def get_my_profile(
-        user: User = Depends(get_current_user),
+    user: User = Depends(get_current_user),
 ):
     """
     Получение профиля текущего пользователя.
@@ -41,7 +42,7 @@ def get_my_profile(
 
 @router.get("/{user_id}")
 def get_user_profile(
-        user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """
     Получение профиля другого пользователя по ID.
@@ -82,7 +83,7 @@ def get_user_profile(
 
 @router.post("/{user_id}/follow", response_model=SimpleResponse)
 def follow_user(
-        user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """
     Подписка на пользователя.
@@ -122,7 +123,7 @@ def follow_user(
 
 @router.delete("/{user_id}/follow", response_model=SimpleResponse)
 def unfollow_user(
-        user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """
     Отписка от пользователя.

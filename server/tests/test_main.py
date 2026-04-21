@@ -1,4 +1,4 @@
-from app.db.models import User, Tweet
+from app.db.models import Tweet, User
 
 
 def test_create_tweet(db, client):
@@ -93,9 +93,7 @@ def test_delete_tweet(db, client):
     db.refresh(tweet)
 
     # Удаляем твит
-    response = client.delete(
-        f"/tweets/{tweet.id}", headers={"api-key": user.api_key}
-    )
+    response = client.delete(f"/tweets/{tweet.id}", headers={"api-key": user.api_key})
 
     assert response.status_code == 200
     assert response.json()["result"]
@@ -189,9 +187,7 @@ def test_delete_others_tweet(db, client):
     db.refresh(tweet)
 
     # user2 пытается удалить чужой твит
-    response = client.delete(
-        f"/tweets/{tweet.id}", headers={"api-key": user2.api_key}
-    )
+    response = client.delete(f"/tweets/{tweet.id}", headers={"api-key": user2.api_key})
 
     assert response.status_code == 403  # Forbidden
 

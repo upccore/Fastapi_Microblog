@@ -1,5 +1,6 @@
-from app.db.models import User
 from app.db.database import SessionLocal
+from app.db.models import User
+
 
 def seed_users():
     db = SessionLocal()
@@ -19,6 +20,7 @@ def seed_users():
             print("ℹ️ Users already exist, skipping seed")
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     seed_users()
